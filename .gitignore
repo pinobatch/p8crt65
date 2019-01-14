@@ -1,0 +1,8 @@
+/*.nes
+/*-*.zip
+*.nes.deb
+*.o
+/obj/nes/*.s
+/obj/nes/*.chr
+map.txt
+zip.in
