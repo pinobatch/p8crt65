@@ -23,9 +23,15 @@ P8C_USE_SPRITE_0 = 0
 ; local variables.  A function call pushes parameters on the stack
 ; from left to right, without promoting char to int.  This means 3
 ; arguments of type char, int, char appear in sp[3], sp[1], and sp[0]
-; respectively.  Adding __fastcall__ to a function's prototype puts
-; the rightmost parameter in register pair XA instead of pushing it:
+; respectively.  
+;
+; cc65 supports two calling conventions: __cdecl__, which pushes all
+; parameters to the stack above, and __fastcall__, which does not
+; push the last parameter but instead loads it into register pair XA:
 ; bits 7-0 in A, bits 15-8 in X, and bits 31-16 of a long in sreg.
+; This leads to a way to provide a default value for a last argument:
+; make a __cdecl__ entry point that forces its value and falls
+; through to a __fastcall__ entry point that accepts its value.
 ;
 ; The callee may overwrite up to 18 bytes of local variables in zero
 ; page: sreg (2 bytes), regsave (4 bytes), ptr1-ptr4 (2 bytes each),
@@ -46,7 +52,6 @@ P8C_USE_SPRITE_0 = 0
 .exportzp _cur_keys, _new_keys, _das_keys, _das_timer
 .import _p8c_above_sprite_0
 .import ppu_clear_nt, ppu_clear_oam
-.importzp cur_keys
 
 .zeropage
 _p8c_PPUCTRL: .res 1
@@ -183,6 +188,10 @@ trivial:
 
 ; Popslide frontend ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+.export _nstripe_memcpy_down, _nstripe_memcpy
+.export _nstripe_memset, _nstripe_memset
+.export _nstripe_strcpy_add, _nstripe_strcpy
+
 .proc _nstripe_memcpy_down
   ora #$80
   ; fall through
@@ -279,5 +288,60 @@ trivial:
   sta popslide_used
 
   lda #3  ; Clean up stack
+  jmp add_a_to_sp
+.endproc
+
+.proc _nstripe_strcpy
+  lda #0
+  ; fall through
+.endproc
+
+;;
+; @param A amount to add to ASCII
+; @param sp[0] source address (string)
+; @param sp[2] destination address
+.proc _nstripe_strcpy_add
+addamount = tmp1
+src = ptr1
+  sta addamount
+  ldx popslide_used
+  ldy #3
+  lda (sp),y
+  sta popslide_buf+0,x  ; destination high
+  dey
+  lda (sp),y
+  sta popslide_buf+1,x  ; destination low
+  dey
+  lda (sp),y
+  sta src+1    ; source high
+  dey
+  lda (sp),y
+  sta src+0
+  ; Y is still 0
+  lda (src),y
+  beq do_nothing
+  loop:
+    clc
+    adc addamount
+    sta popslide_buf+3,x
+    inx
+    iny
+    lda (src),y
+    bne loop
+
+  ; Y = string length; X = popslide_used + string length
+  txa
+  clc
+  adc #3
+  ldx popslide_used
+  sta popslide_used
+  ; Write out length to packet
+  ; Y = string length; X = previous popslide_used
+  dey
+  tya
+  sta popslide_buf+2,x
+
+do_nothing:
+  lda #4
   jmp add_a_to_sp
 .endproc

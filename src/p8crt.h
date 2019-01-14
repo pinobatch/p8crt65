@@ -8,6 +8,7 @@
  * disables most NMI handler functionality.
  */
 extern unsigned char p8c_PPUCTRL;
+#pragma zpsym ("p8c_PPUCTRL")
 #define NT_2000    0x00
 #define NT_2400    0x01
 #define NT_2800    0x02
@@ -25,6 +26,7 @@ extern unsigned char p8c_PPUCTRL;
  * turn rendering off, but NMI handler execution continues.
  */
 extern unsigned char p8c_PPUMASK;
+#pragma zpsym ("p8c_PPUMASK")
 #define LIGHTGRAY 0x01
 #define BG_OFF    0x00
 #define BG_CLIP   0x08
@@ -40,6 +42,8 @@ extern unsigned char p8c_PPUMASK;
  * Scroll values to write to $2005 when reenabling rendering.
  */
 extern unsigned char p8c_SCX, p8c_SCY;
+#pragma zpsym ("p8c_SCX")
+#pragma zpsym ("p8c_SCY")
 
 /**
  * Tasks to perform in NMI handler
@@ -48,6 +52,7 @@ extern unsigned char p8c_SCX, p8c_SCY;
  * 0x20: Call p8c_above_sprite_0() then wait for sprite 0
  */
 extern unsigned char p8c_vbltasks;
+#pragma zpsym ("p8c_vbltasks")
 #define VBLTASK_OAM     (1<<7)
 #define VBLTASK_VRAM    (1<<6)
 #define VBLTASK_SPRITE0 (1<<5)
@@ -56,6 +61,7 @@ extern unsigned char p8c_vbltasks;
  * Number of times the NMI handler has run since p8c_init()
  */
 extern unsigned char nmis;
+#pragma zpsym ("nmis")
 
 /**
  * Buffer to copy to OAM if task is set
@@ -67,6 +73,7 @@ extern unsigned char OAM[256];
  * 0 or 4 at the start of each frame.
  */
 extern unsigned char oam_used;
+#pragma zpsym ("oam_used")
 
 /**
  * Sets up variables used by the NMI handler and Popslide buffer.
@@ -142,6 +149,24 @@ void __fastcall__ nstripe_memset(unsigned int vram_dst, unsigned char ch, unsign
  */
 void __fastcall__ nstripe_memset_down(unsigned int vram_dst, unsigned char ch, unsigned char count);
 
+/**
+ * Writes a NUL-terminated string to video memory, adding a value to
+ * each ASCII character code.
+ * @param vram_dst starting destination address in video memory
+ * (usually 0x2000-0x2BD0)
+ * @param src the string to write
+ * @param addamount the value to add to each character code
+ */
+void __fastcall__ nstripe_strcpy_add(unsigned int vram_dst, const char *src, unsigned char addamount);
+
+/**
+ * Writes a NUL-terminated string to video memory as ASCII codes.
+ * @param vram_dst starting destination address in video memory
+ * (usually 0x2000-0x2BD0)
+ * @param src the string to write
+ */
+void __cdecl__ nstripe_strcpy(unsigned int vram_dst, const char *src);
+
 /* Other PPU operations ********************************************/
 
 /**
@@ -167,18 +192,20 @@ void __fastcall__ p8c_clear_oam(unsigned char startindex);
  * The buttons held on both controllers as of the most recent
  * p8c_read_pads() call.
  */
-extern unsigned char p8c_cur_keys[2];
+extern unsigned char cur_keys[2];
+#pragma zpsym ("cur_keys")
 
 /**
  * The buttons changing from unpressed to pressed held on both controllers as of the most recent
  * p8c_read_pads() call.
  */
-extern unsigned char p8c_new_keys[2];
+extern unsigned char new_keys[2];
+#pragma zpsym ("new_keys")
 
 /**
  * Reads the controller, updating p8c_cur_keys and p8c_new_keys.
  */
-void p8c_read_pads(void);
+void read_pads(void);
 
 #define KEY_A      (1<<7)
 #define KEY_B      (1<<6)

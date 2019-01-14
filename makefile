@@ -56,7 +56,7 @@ $(objdir)/%.o: $(objdir)/%.s
 $(objdir)/%.o: $(srcdir)/%.s
 	ca65 -o $@ $<
 
-$(objdir)/%.s: $(srcdir)/%.c
+$(objdir)/%.s: $(srcdir)/%.c $(srcdir)/p8crt.h
 	cc65 -Oi -o $@ $<
 
 $(objdir)/%.chr: $(imgdir)/%.png
